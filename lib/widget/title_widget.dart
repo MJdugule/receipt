@@ -13,14 +13,14 @@ class TitleWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Column(
         children: [
-          Icon(icon, size: 100, color: Colors.white),
+          Icon(icon, size: 100, color: Colors.green),
           const SizedBox(height: 16),
           Text(
             text,
             style: TextStyle(
-              fontSize: 42,
-              fontWeight: FontWeight.w400,
-              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
             ),
             textAlign: TextAlign.center,
           ),

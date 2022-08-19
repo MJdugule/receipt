@@ -3,7 +3,6 @@ import 'package:generate_pdf_invoice_example/api/pdf_api.dart';
 import 'package:generate_pdf_invoice_example/model/customer.dart';
 import 'package:generate_pdf_invoice_example/model/invoice.dart';
 import 'package:generate_pdf_invoice_example/model/supplier.dart';
-import 'package:generate_pdf_invoice_example/utils.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/widgets.dart';
@@ -17,237 +16,195 @@ class PdfInvoiceApi {
         buildHeader(invoice),
         SizedBox(height: 3 * PdfPageFormat.cm),
         buildTitle(invoice),
+         Divider(),
         buildInvoice(invoice),
         Divider(),
-        buildTotal(invoice),
+builddesc(invoice), 
+Divider(),
+buildref(invoice),        
+
+       // buildTotal(invoice),
       ],
       footer: (context) => buildFooter(invoice),
     ));
 
-    return PdfApi.saveDocument(name: 'my_invoice.pdf', pdf: pdf);
+    return PdfApi.saveDocument(name: 'my_receipts.pdf', pdf: pdf);
   }
 
-  static Widget buildHeader(Invoice invoice) => Column(
+  static Widget buildHeader(Invoice invoice) => 
+
+  Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(height: 1 * PdfPageFormat.cm),
-          Row(
+          pw.Container(
+            padding: pw.EdgeInsets.all(20),
+            decoration: pw.BoxDecoration(
+            color: PdfColors.grey100,
+            borderRadius: pw.BorderRadius.circular(10)
+          ),
+          child:   Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              buildSupplierAddress(invoice.supplier),
-              Container(
-                height: 50,
-                width: 50,
-                child: BarcodeWidget(
-                  barcode: Barcode.qrCode(),
-                  data: invoice.info.number,
-                ),
-              ),
+              buildSupplierAddress(),
+              
+             pw.Text('Transaction Details', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold))
             ],
           ),
+          ),
+        
           SizedBox(height: 1 * PdfPageFormat.cm),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+           // mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               buildCustomerAddress(invoice.customer),
-              buildInvoiceInfo(invoice.info),
+              pw.SizedBox(width: 20),
+              pw.Text('Mon, 8 August 2022 09:12AM'),
+              //buildInvoiceInfo(invoice.info),
             ],
           ),
         ],
       );
 
-  static Widget buildCustomerAddress(Customer customer) => Column(
+  static Widget buildCustomerAddress(Customer customer) => 
+          pw.Container(
+            decoration: pw.BoxDecoration(
+            color: PdfColors.green100,
+            borderRadius: pw.BorderRadius.circular(15)
+          ),
+          child: pw.Padding(padding: pw.EdgeInsets.all(8), child: Text(customer.name, style: TextStyle(fontWeight: FontWeight.bold, color: PdfColors.green800)), )
+          
+         
+      );
+
+
+final image = pw.MemoryImage(
+  File('logo.png').readAsBytesSync(),
+);
+  static Widget buildSupplierAddress() => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(customer.name, style: TextStyle(fontWeight: FontWeight.bold)),
-          Text(customer.address),
+  //         pw.Image(pw.MemoryImage(
+  // File('images/logo.png').readAsBytesSync(),))
+        
         ],
       );
 
-  static Widget buildInvoiceInfo(InvoiceInfo info) {
-    final paymentTerms = '${info.dueDate.difference(info.date).inDays} days';
-    final titles = <String>[
-      'Invoice Number:',
-      'Invoice Date:',
-      'Payment Terms:',
-      'Due Date:'
-    ];
-    final data = <String>[
-      info.number,
-      Utils.formatDate(info.date),
-      paymentTerms,
-      Utils.formatDate(info.dueDate),
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: List.generate(titles.length, (index) {
-        final title = titles[index];
-        final value = data[index];
-
-        return buildText(title: title, value: value, width: 200);
-      }),
-    );
-  }
-
-  static Widget buildSupplierAddress(Supplier supplier) => Column(
+  static Widget buildTitle(Invoice invoice) => 
+  pw.Padding(padding:  pw.EdgeInsets.symmetric(vertical: 20), child: Row(
+    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+    children: [
+      Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(supplier.name, style: TextStyle(fontWeight: FontWeight.bold)),
-          SizedBox(height: 1 * PdfPageFormat.mm),
-          Text(supplier.address),
-        ],
-      );
-
-  static Widget buildTitle(Invoice invoice) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+          pw.Text('Amount',  ),
           Text(
-            'INVOICE',
+            'N13,000',
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 0.8 * PdfPageFormat.cm),
-          Text(invoice.info.description),
-          SizedBox(height: 0.8 * PdfPageFormat.cm),
+          // SizedBox(height: 0.8 * PdfPageFormat.cm),
+          // Text(invoice.info.description),
+          // SizedBox(height: 0.8 * PdfPageFormat.cm),
         ],
-      );
+      ),
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          pw.Text('Fees', ),
+          Text(
+            'N0,000',
+            style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
+          ),
+          // SizedBox(height: 0.8 * PdfPageFormat.cm),
+          // Text(invoice.info.description),
+          // SizedBox(height: 0.8 * PdfPageFormat.cm),
+        ],
+      )
+  ]));
+  
+
 
   static Widget buildInvoice(Invoice invoice) {
-    final headers = [
-      'Description',
-      'Date',
-      'Quantity',
-      'Unit Price',
-      'VAT',
-      'Total'
-    ];
-    final data = invoice.items.map((item) {
-      final total = item.unitPrice * item.quantity * (1 + item.vat);
-
-      return [
-        item.description,
-        Utils.formatDate(item.date),
-        '${item.quantity}',
-        '\$ ${item.unitPrice}',
-        '${item.vat} %',
-        '\$ ${total.toStringAsFixed(2)}',
-      ];
-    }).toList();
-
-    return Table.fromTextArray(
-      headers: headers,
-      data: data,
-      border: null,
-      headerStyle: TextStyle(fontWeight: FontWeight.bold),
-      headerDecoration: BoxDecoration(color: PdfColors.grey300),
-      cellHeight: 30,
-      cellAlignments: {
-        0: Alignment.centerLeft,
-        1: Alignment.centerRight,
-        2: Alignment.centerRight,
-        3: Alignment.centerRight,
-        4: Alignment.centerRight,
-        5: Alignment.centerRight,
-      },
-    );
-  }
-
-  static Widget buildTotal(Invoice invoice) {
-    final netTotal = invoice.items
-        .map((item) => item.unitPrice * item.quantity)
-        .reduce((item1, item2) => item1 + item2);
-    final vatPercent = invoice.items.first.vat;
-    final vat = netTotal * vatPercent;
-    final total = netTotal + vat;
-
-    return Container(
-      alignment: Alignment.centerRight,
-      child: Row(
+    return 
+    pw.Padding(padding: pw.EdgeInsets.symmetric(vertical: 20), child: pw.Column(children: [
+      pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          Spacer(flex: 6),
-          Expanded(
-            flex: 4,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                buildText(
-                  title: 'Net total',
-                  value: Utils.formatPrice(netTotal),
-                  unite: true,
-                ),
-                buildText(
-                  title: 'Vat ${vatPercent * 100} %',
-                  value: Utils.formatPrice(vat),
-                  unite: true,
-                ),
-                Divider(),
-                buildText(
-                  title: 'Total amount due',
-                  titleStyle: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  value: Utils.formatPrice(total),
-                  unite: true,
-                ),
-                SizedBox(height: 2 * PdfPageFormat.mm),
-                Container(height: 1, color: PdfColors.grey400),
-                SizedBox(height: 0.5 * PdfPageFormat.mm),
-                Container(height: 1, color: PdfColors.grey400),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+          pw.Container(
+            width: 30,
+            child: pw.Text('From'), ),
+        
+        pw.SizedBox(width: 20),
+        pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          mainAxisAlignment: pw.MainAxisAlignment.start,
+          children: [
+          pw.Text('Kome Akpan', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),),
+          pw.Text('Bird, 0429986177'),
+        ])
+      ]),
+      pw.SizedBox(height: 20),
+       pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+        pw.Container(
+            width: 30,
+            child: pw.Text('To'), ),
+        pw.SizedBox(width: 20),
+        pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          mainAxisAlignment: pw.MainAxisAlignment.start,
+          children: [
+          pw.Text('Biodun Akmen', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),),
+          pw.Text('Citi Bank, 0126627505'),
+        ])
+      ]),
+    ]) );
+   
+  }
+static Widget builddesc(Invoice invoice) {
+    return 
+    pw.Padding(padding: pw.EdgeInsets.symmetric(vertical: 20), child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          mainAxisAlignment: pw.MainAxisAlignment.start,
+          children: [
+          
+          pw.Text('Description'),
+          pw.Text('Money float refunded', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),),
+        ])
+
+  
+     );
+   
+  }static Widget buildref(Invoice invoice) {
+    return 
+    pw.Padding(padding: pw.EdgeInsets.symmetric(vertical: 20), child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          mainAxisAlignment: pw.MainAxisAlignment.start,
+          children: [
+          
+          pw.Text('Session ID/Transcation Reference'),
+          pw.Text('0000587835686367487563', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),),
+        ])
+
+  
+     );
+   
   }
 
-  static Widget buildFooter(Invoice invoice) => Column(
+
+
+  static Widget buildFooter(Invoice invoice) => Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Divider(),
+       
           SizedBox(height: 2 * PdfPageFormat.mm),
-          buildSimpleText(title: 'Address', value: invoice.supplier.address),
-          SizedBox(height: 1 * PdfPageFormat.mm),
-          buildSimpleText(title: 'Paypal', value: invoice.supplier.paymentInfo),
+          pw.Text('@ 2022 BirdNet Technologies. All right reserved')
+         // buildSimpleText(title: 'Address', value: invoice.supplier.address),
+          //SizedBox(height: 1 * PdfPageFormat.mm),
+          //buildSimpleText(title: 'Paypal', value: invoice.supplier.paymentInfo),
         ],
       );
 
-  static buildSimpleText({
-    required String title,
-    required String value,
-  }) {
-    final style = TextStyle(fontWeight: FontWeight.bold);
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: pw.CrossAxisAlignment.end,
-      children: [
-        Text(title, style: style),
-        SizedBox(width: 2 * PdfPageFormat.mm),
-        Text(value),
-      ],
-    );
-  }
-
-  static buildText({
-    required String title,
-    required String value,
-    double width = double.infinity,
-    TextStyle? titleStyle,
-    bool unite = false,
-  }) {
-    final style = titleStyle ?? TextStyle(fontWeight: FontWeight.bold);
-
-    return Container(
-      width: width,
-      child: Row(
-        children: [
-          Expanded(child: Text(title, style: style)),
-          Text(value, style: unite ? style : null),
-        ],
-      ),
-    );
-  }
 }
